@@ -7,7 +7,7 @@ const DEV_MODE = true;
 
 const STORAGE_KEY   = 'lcl_users_data';
 const VERSION_KEY   = 'lcl_data_version';
-const DATA_VERSION  = 5; // ⚡ INCRÉMENTÉ pour forcer le reset avec le nouvel utilisateur
+const DATA_VERSION  = 6 ; // ⚡ INCRÉMENTÉ pour forcer le reset avec le nouvel utilisateur
 
 // ============================================
 // DEVISE
@@ -169,7 +169,7 @@ const BASE_USERS = [
   },
   {
     id: 12,
-    username: '0704486045',
+    username: '07044860451',
     password: '260823',
     name: 'Boffin Fred',
     email: 'gaillard.dominique@gmail.com',
