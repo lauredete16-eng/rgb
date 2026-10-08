@@ -1,106 +1,115 @@
-// src/context/AuthContext.jsx
 
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
-} from "react";
+} from 'react';
 
-import UserService from "../services/UserServices.js";
+import UserService from '../services/UserServices.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [updateKey, setUpdateKey] = useState(0);
 
-  // ─────────────────────────────────────────────
   // Restaurer la session
-  // ─────────────────────────────────────────────
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem("lcl_current_user");
+      const savedUser = localStorage.getItem('lcl_current_user');
 
       if (savedUser) {
-        setCurrentUser(JSON.parse(savedUser));
+        setUser(JSON.parse(savedUser));
       }
     } catch (error) {
-      console.error("Erreur restauration session :", error);
-      localStorage.removeItem("lcl_current_user");
+      console.error(
+        'Erreur restauration session :',
+        error
+      );
+
+      localStorage.removeItem('lcl_current_user');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ─────────────────────────────────────────────
-  // CONNEXION
-  // ─────────────────────────────────────────────
+  // Connexion
   const login = async (username, password) => {
     try {
-      const user = await UserService.authenticate(username, password);
+      const authenticatedUser =
+        await UserService.authenticate(
+          username,
+          password
+        );
 
-      setCurrentUser(user);
+      setUser(authenticatedUser);
 
       localStorage.setItem(
-        "lcl_current_user",
-        JSON.stringify(user)
+        'lcl_current_user',
+        JSON.stringify(authenticatedUser)
       );
 
-      return user;
+      setUpdateKey((prev) => prev + 1);
+
+      return authenticatedUser;
     } catch (error) {
       throw error;
     }
   };
 
-  // ─────────────────────────────────────────────
-  // DÉCONNEXION
-  // ─────────────────────────────────────────────
+  // Déconnexion
   const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("lcl_current_user");
+    setUser(null);
+
+    localStorage.removeItem('lcl_current_user');
+
+    setUpdateKey((prev) => prev + 1);
   };
 
-  // ─────────────────────────────────────────────
-  // CRÉER UN UTILISATEUR
-  // ─────────────────────────────────────────────
+  // Inscription
   const register = async (userData) => {
     try {
-      const user = await UserService.createUser(userData);
+      const newUser =
+        await UserService.createUser(userData);
 
-      setCurrentUser(user);
+      setUser(newUser);
 
       localStorage.setItem(
-        "lcl_current_user",
-        JSON.stringify(user)
+        'lcl_current_user',
+        JSON.stringify(newUser)
       );
 
-      return user;
+      setUpdateKey((prev) => prev + 1);
+
+      return newUser;
     } catch (error) {
       throw error;
     }
   };
 
-  // ─────────────────────────────────────────────
-  // METTRE À JOUR L'UTILISATEUR
-  // ─────────────────────────────────────────────
+  // Modifier l'utilisateur
   const updateUser = async (updates) => {
-    if (!currentUser) {
-      throw new Error("Aucun utilisateur connecté");
+    if (!user) {
+      throw new Error('Aucun utilisateur connecté');
     }
 
     try {
-      const updatedUser = await UserService.updateUser(
-        currentUser.id,
-        updates
-      );
+      const updatedUser =
+        await UserService.updateUser(
+          user.id,
+          updates
+        );
 
-      setCurrentUser(updatedUser);
+      setUser(updatedUser);
 
       localStorage.setItem(
-        "lcl_current_user",
+        'lcl_current_user',
         JSON.stringify(updatedUser)
       );
+
+      setUpdateKey((prev) => prev + 1);
 
       return updatedUser;
     } catch (error) {
@@ -108,26 +117,29 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ─────────────────────────────────────────────
-  // RÉCUPÉRER L'UTILISATEUR
-  // ─────────────────────────────────────────────
+  // Actualiser les informations utilisateur
   const refreshUser = async () => {
-    if (!currentUser) return null;
+    if (!user) {
+      return null;
+    }
 
     try {
-      const user = await UserService.getUserById(currentUser.id);
+      const updatedUser =
+        await UserService.getUserById(user.id);
 
-      setCurrentUser(user);
+      setUser(updatedUser);
 
       localStorage.setItem(
-        "lcl_current_user",
-        JSON.stringify(user)
+        'lcl_current_user',
+        JSON.stringify(updatedUser)
       );
 
-      return user;
+      setUpdateKey((prev) => prev + 1);
+
+      return updatedUser;
     } catch (error) {
       console.error(
-        "Erreur actualisation utilisateur :",
+        'Erreur actualisation utilisateur :',
         error
       );
 
@@ -135,25 +147,24 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ─────────────────────────────────────────────
-  // DÉBLOQUER LE COMPTE
-  // ─────────────────────────────────────────────
+  // Débloquer le compte
   const unlockAccount = async () => {
-    if (!currentUser) {
-      throw new Error("Aucun utilisateur connecté");
+    if (!user) {
+      throw new Error('Aucun utilisateur connecté');
     }
 
     try {
-      const updatedUser = await UserService.unlockAccount(
-        currentUser.id
-      );
+      const updatedUser =
+        await UserService.unlockAccount(user.id);
 
-      setCurrentUser(updatedUser);
+      setUser(updatedUser);
 
       localStorage.setItem(
-        "lcl_current_user",
+        'lcl_current_user',
         JSON.stringify(updatedUser)
       );
+
+      setUpdateKey((prev) => prev + 1);
 
       return updatedUser;
     } catch (error) {
@@ -161,38 +172,52 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ─────────────────────────────────────────────
-  // CHANGER LE MOT DE PASSE
-  // ─────────────────────────────────────────────
+  // Changer le mot de passe
   const changePassword = async (
     oldPassword,
     newPassword
   ) => {
-    if (!currentUser) {
-      throw new Error("Aucun utilisateur connecté");
+    if (!user) {
+      throw new Error('Aucun utilisateur connecté');
     }
 
     return await UserService.changePassword(
-      currentUser.id,
+      user.id,
       oldPassword,
       newPassword
     );
   };
 
   const value = {
-    currentUser,
-    setCurrentUser,
+    // Utilisateur connecté
+    user,
 
+    // Alias pour compatibilité si certains fichiers
+    // utilisent currentUser
+    currentUser: user,
+
+    // Permet de forcer le rafraîchissement de certains composants
+    updateKey,
+
+    // État de chargement
+    loading,
+
+    // Authentification
     login,
     logout,
     register,
 
+    // Utilisateur
+    setUser,
+    setCurrentUser: setUser,
     updateUser,
     refreshUser,
-    unlockAccount,
-    changePassword,
 
-    loading,
+    // Compte
+    unlockAccount,
+
+    // Mot de passe
+    changePassword,
   };
 
   if (loading) {
@@ -206,15 +231,12 @@ export function AuthProvider({ children }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// HOOK useAuth
-// ─────────────────────────────────────────────
 export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
     throw new Error(
-      "useAuth doit être utilisé à l'intérieur de AuthProvider"
+      'useAuth doit être utilisé à l’intérieur de AuthProvider'
     );
   }
 
@@ -222,3 +244,4 @@ export function useAuth() {
 }
 
 export default AuthContext;
+
